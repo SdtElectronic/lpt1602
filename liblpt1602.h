@@ -16,15 +16,16 @@ class lpt1602{
 				throw std::runtime_error("Permission denied");
 		};
 
-		int lcd_init();
-		int lcd_write(char char2write);
-		int lcd_putch(char char2write);
-		int lcd_puts(const char* str2write);
-		int lcd_goto(size_t row, size_t column);
-		int lcd_clear();
-		int lcd_home();
-		int lcd_cursor(bool cur, bool blk);
-		int lcd_entry_mode(lpt1602::entryMode mode);
+		int init();
+		int write(char char2write);
+		int wrChr(char chr);
+		int wrCmd(char cmd);
+		int puts(const char* str2write);
+		int curPos(size_t row, size_t column);
+		int clear();
+		int home();
+		int curMode(bool cur, bool blk);
+		int entMode(lpt1602::entryMode mode);
 	private:
 		size_t dataAddr;
 		size_t statAddr;
