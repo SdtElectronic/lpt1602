@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <sys/io.h>
+#pragma once
 
 class lpt1602{	
 	public:
@@ -11,7 +12,9 @@ class lpt1602{
 			curNsTxtLs = 3
 		};
 
-		constexpr lpt1602(size_t lptAddr): dataAddr(lptAddr), statAddr(lptAddr + 1), ctrlAddr(lptAddr + 2){	
+		constexpr lpt1602(size_t lptAddr = 0x378): dataAddr(lptAddr), 
+												   statAddr(lptAddr + 1), 
+												   ctrlAddr(lptAddr + 2){	
 			if(ioperm(dataAddr, 3, 1))
 				throw std::runtime_error("Permission denied");
 		};
@@ -26,6 +29,7 @@ class lpt1602{
 		int home();
 		int curMode(bool cur, bool blk);
 		int entMode(lpt1602::entryMode mode);
+		int tgDsp(bool on);
 	private:
 		size_t dataAddr;
 		size_t statAddr;

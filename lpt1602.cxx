@@ -8,13 +8,13 @@ int lpt1602::init(){
 	outb( inb(ctrlAddr) | 0x08 ,ctrlAddr);
 	//RS is made high: control (register select)
 	write(0x0f);
-	usleep(5000);
+	usleep(1000);
 	write(0x01);
-	usleep(5000);
+	usleep(1000);
 	write(0x38);
-	usleep(5000);
+	usleep(1000);
 	write(0x38);
-	usleep(5000);
+	usleep(1000);
 	write(0x38);
 	write(0x08);
 	write(0x01);
@@ -90,5 +90,16 @@ int lpt1602::curMode(bool cur, bool blk){
 	 * 3 - both cursor and blink
 	 */
 	wrCmd( 0x0c + (((cur<<1)|blk)%4));
+	return 0;
+}
+
+int lpt1602::tgDsp(bool on){	
+	wrCmd(8 + (on << 3));
+	if(on){
+		outb(0x00, ctrlAddr);
+		this->init();
+		return 0;
+	}
+	outb(0xff, ctrlAddr);
 	return 0;
 }
