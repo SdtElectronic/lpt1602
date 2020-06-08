@@ -35,11 +35,15 @@ constexpr unsigned int GiB = 1<<30;
 lpt1602 npt;
 constexpr std::array<int(*)(std::string), 3> cbArr{cpuPg, memPg, netPg};
 
+constexpr std::array<char, 8> upArr{0x00, 0x00, 0x04, 0x0a, 0x11, 0x00, 0x00, 0x00};
+constexpr std::array<char, 8> dnArr{0x00, 0x00, 0x11, 0x0a, 0x04, 0x00, 0x00, 0x00};
+constexpr std::array<char, 8> cDeg {0x16, 0x09, 0x08, 0x08, 0x08, 0x09, 0x06, 0x00};
+
 int cpuPg(std::string dumb){	
 	struct sysinfo info;
 	const int ret = sysinfo(&info);	
 	std::stringstream cpu;
-	cpu <<"Ld"<<std::fixed<<std::setprecision(2)
+	cpu <<" "<<std::fixed<<std::setprecision(2)
 		<<static_cast<double>(info.loads[0])/(1 << SI_LOAD_SHIFT)<<' '
 		<<static_cast<double>(info.loads[1])/(1 << SI_LOAD_SHIFT)<<' '
 		<<static_cast<double>(info.loads[2])/(1 << SI_LOAD_SHIFT);
@@ -57,7 +61,7 @@ int cpuPg(std::string dumb){
 	fclose(thermal);
 	std::stringstream tem;
 	tem <<"  "<<std::fixed<<std::setprecision(1)
-		<<tmp1/1000<<"C  "<<tmp2/1000<<"C";
+		<<tmp1/1000<<(char)0x03<<"  "<<tmp2/1000<<(char)0x03;
 	npt.curPos(2, 0);
 	npt.puts(tem.str().c_str());
 	return 0;
@@ -127,15 +131,15 @@ int netPg(std::string interface = std::string{"eth0"}){
 	npt.puts(inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
 	const int rxTmp = getXbytes(interface, std::string("rx_bytes"));
 	const int txTmp = getXbytes(interface, std::string("tx_bytes"));
-	usleep(100000);
-	double rxSpd = (getXbytes(interface, std::string("rx_bytes")) - rxTmp)/0.1;
-	double txSpd = (getXbytes(interface, std::string("tx_bytes")) - rxTmp)/0.1;
+	usleep(50000);
+	double rxSpd = (getXbytes(interface, std::string("rx_bytes")) - rxTmp)/0.05;
+	double txSpd = (getXbytes(interface, std::string("tx_bytes")) - txTmp)/0.05;
 	std::string txUnit = getXunit(txSpd);
 	std::string rxUnit = getXunit(rxSpd);
 	std::stringstream spd;
-	spd <<'U'<<std::fixed<<std::setprecision(1)<<std::setprecision(1)<<std::setw(5)<<std::setfill(' ')
+	spd <<(char)0x58<<std::fixed<<std::setprecision(1)<<std::setw(5)<<std::setfill(' ')
 		<<txSpd<<txUnit
-		<<" D"<<std::setprecision(2)<<std::setw(6)<<std::setfill(' ')
+		<<' '<<(char)0x60<<std::setprecision(2)<<std::setw(6)<<std::setfill(' ')
 		<<rxSpd<<rxUnit;
 	npt.curPos(2, 0);
 	npt.puts(spd.str().c_str());
@@ -186,6 +190,9 @@ bool thd(){
 
 int main(void){	
 	npt.init();
+	npt.defCh(0x58, upArr);
+	npt.defCh(0x60, dnArr);
+	npt.defCh(0x50, cDeg);
 	thd();
 	while(1){	
 		if(((inb(0x378 + 1)^0x80) >> 3) & (1 << 3)){	

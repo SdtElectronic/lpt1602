@@ -45,6 +45,15 @@ int lpt1602::wrChr(char chr){
 	return 0;
 }
 
+int lpt1602::defCh(char addr, std::array<char, 8> chr){	
+	size_t ind = 0;
+	for(auto line: chr){	
+		wrCmd(addr + ind++);
+		wrChr(line);
+	}
+	return 0;
+}
+
 int lpt1602::puts(const char* str2write){	
 	outb( inb(ctrlAddr) & 0xF7, ctrlAddr);
 	//RS=low: data

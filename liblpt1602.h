@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <sys/io.h>
+#include <array>
 #pragma once
 
 class lpt1602{	
@@ -23,6 +24,7 @@ class lpt1602{
 		int write(char char2write);
 		int wrChr(char chr);
 		int wrCmd(char cmd);
+		int defCh(char addr, std::array<char, 8> chr);
 		int puts(const char* str2write);
 		int curPos(size_t row, size_t column);
 		int clear();
