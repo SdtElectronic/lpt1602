@@ -14,6 +14,7 @@
 #include <ctime>
 #include <string>
 #include <iomanip>
+#include <fstream>
 #include <array>
 #include <thread>
 #include <sstream>
@@ -27,8 +28,9 @@ int timPg(std::string);
 constexpr std::array<int(*)(std::string), 4> cbArr{cpuPg, memPg, netPg, timPg};
 
 /* helper function */
-unsigned int getXbytes(std::string interface, std::string xDir);
+inline unsigned int getXbytes(std::string interface, std::string xDir);
 std::string getXunit(double &xSpd);
+template<typename T> T fout(std::string fname);
 
 /* exit flag */
 bool ext = 0;
@@ -59,14 +61,9 @@ int cpuPg(std::string dumb){
 	npt.puts(cpu.str().c_str());
 	/* Core1. core2 temperature */
 	float systemp, tmp1, tmp2;
-	FILE *thermal;
 	int n;
-	thermal = fopen("/sys/bus/platform/devices/coretemp.0/hwmon/hwmon1/temp2_input", "r");
-	n = fscanf(thermal, "%f", &tmp1);
-	fclose(thermal);
-	thermal = fopen("/sys/bus/platform/devices/coretemp.0/hwmon/hwmon1/temp3_input", "r");
-	n = fscanf(thermal, "%f", &tmp2);
-	fclose(thermal);
+	tmp1 = fout<float>(std::string("/sys/bus/platform/devices/coretemp.0/hwmon/hwmon1/temp2_input"));
+	tmp2 = fout<float>(std::string("/sys/bus/platform/devices/coretemp.0/hwmon/hwmon1/temp3_input"));
 	std::stringstream tem;
 	tem <<" "<<std::fixed<<std::setprecision(1)
 		<<tmp1/1000<<(char)0x02<<'C'<<"  "<<tmp2/1000<<(char)0x02<<'C';
@@ -176,17 +173,20 @@ std::string getXunit(double &xSpd){
 	return xUnit[unitInd];
 }
 
-unsigned int getXbytes(std::string interface, std::string xDir){
-	unsigned int byt;
-	FILE *spd;
-	int n;
-	spd = fopen((std::string("/sys/class/net/") 
-					+ interface 
-					+ std::string("/statistics/").c_str()
-					+ xDir).c_str(), "r");
-	n = fscanf(spd, "%d", &byt);
-	fclose(spd);
-	return byt;
+inline unsigned int getXbytes(std::string interface, std::string xDir){
+	return fout<unsigned int>(std::string("/sys/class/net/") 
+								+ interface 
+								+ std::string("/statistics/")
+								+ xDir);
+}
+
+template<typename T>
+T fout(std::string fname){	
+	std::ifstream file(fname);
+	T val;
+	if(!(file >> val))
+		throw std::runtime_error("can't read file");
+	return val;
 }
 
 /* thread to display all status one time */
