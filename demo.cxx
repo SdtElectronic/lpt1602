@@ -40,7 +40,9 @@ constexpr unsigned int KiB = 1<<10;
 constexpr unsigned int MiB = 1<<20;
 constexpr unsigned int GiB = 1<<30;
 
-lpt1602 npt;
+enum {lptAddr = 0x378};
+
+lpt1602 npt(lptAddr);
 
 /* User defined characters, stored in CGRAM */
 constexpr std::array<char, 8> upArr{0x00, 0x00, 0x04, 0x0a, 0x11, 0x00, 0x00, 0x00};
@@ -123,6 +125,9 @@ int timPg(std::string dumb){
 	return 0;
 }
 
+constexpr unsigned int sampTus = 50000;
+constexpr double sampTs  = sampTus/1e6;
+
 int netPg(std::string interface = std::string{"eth0"}){	
 	int fd;
 	struct ifreq ifr;
@@ -141,9 +146,9 @@ int netPg(std::string interface = std::string{"eth0"}){
 	/* TX and RX traffic */
 	const int rxTmp = getXbytes(interface, std::string("rx_bytes"));
 	const int txTmp = getXbytes(interface, std::string("tx_bytes"));
-	usleep(50000);
-	double rxSpd = (getXbytes(interface, std::string("rx_bytes")) - rxTmp)/0.05;
-	double txSpd = (getXbytes(interface, std::string("tx_bytes")) - txTmp)/0.05;
+	usleep(sampTus);
+	double rxSpd = (getXbytes(interface, std::string("rx_bytes")) - rxTmp)/sampTs;
+	double txSpd = (getXbytes(interface, std::string("tx_bytes")) - txTmp)/sampTs;
 	std::string txUnit = getXunit(txSpd);
 	std::string rxUnit = getXunit(rxSpd);
 	std::stringstream spd;
@@ -214,11 +219,11 @@ int main(void){
 	/* run once after start */
 	thd();
 	while(1){	
-		if(((inb(0x378 + 1)^0x80) >> 3) & (1 << 3)){	
+		if(((inb(lptAddr + 1)^0x80) >> 3) & (1 << 3)){	
 			usleep(200000);
-			if(((inb(0x378 + 1)^0x80) >> 3) & (1 << 3)){	
+			if(((inb(lptAddr + 1)^0x80) >> 3) & (1 << 3)){	
 				usleep(200000);
-				if(!(((inb(0x378 + 1)^0x80) >> 3) & (1 << 3))){	
+				if(!(((inb(lptAddr + 1)^0x80) >> 3) & (1 << 3))){	
 					ext = 1;
 					std::thread td(thd);
 					td.detach();
